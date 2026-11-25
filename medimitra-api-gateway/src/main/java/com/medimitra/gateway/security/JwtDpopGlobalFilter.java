@@ -12,6 +12,7 @@ import com.medimitra.common.security.DpopProofVerifier;
 import com.medimitra.common.security.JwtTokenValidator;
 import com.medimitra.common.security.RegionGuard;
 import com.medimitra.common.security.SecurityErrorCodes;
+import com.medimitra.gateway.tracing.CorrelationIdGlobalFilter;
 import java.nio.charset.StandardCharsets;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -118,14 +119,17 @@ public class JwtDpopGlobalFilter implements GlobalFilter, Ordered {
     }
 
     private Mono<Void> reject(ServerWebExchange exchange, MediMitraException e) {
-        log.warn("rejected request path={} code={} detail={}", exchange.getRequest().getPath().value(), e.errorCode(), e.getMessage());
+        String correlationId = exchange.getAttribute(CorrelationIdGlobalFilter.CORRELATION_ID_ATTRIBUTE);
+        log.warn(
+                "rejected request path={} code={} correlationId={} detail={}",
+                exchange.getRequest().getPath().value(), e.errorCode(), correlationId, e.getMessage());
         ServerHttpResponse response = exchange.getResponse();
         response.setStatusCode(HttpStatus.valueOf(e.httpStatus()));
         response.getHeaders().add(HttpHeaders.CONTENT_TYPE, "application/problem+json");
         String genericMessage = e.httpStatus() == 401 ? "Authentication failed" : "Access denied";
         ApiError apiError = ApiError.of(
                 e.errorCode().value(), e.httpStatus(), e.getClass().getSimpleName(), genericMessage,
-                exchange.getRequest().getPath().value(), null, clockProvider.now());
+                exchange.getRequest().getPath().value(), correlationId, clockProvider.now());
         byte[] bytes;
         try {
             bytes = objectMapper.writeValueAsBytes(apiError);
