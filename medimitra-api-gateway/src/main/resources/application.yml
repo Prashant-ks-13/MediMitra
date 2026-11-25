@@ -1,0 +1,123 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: medimitra-api-gateway
+  cloud:
+    gateway:
+      httpclient:
+        connect-timeout: 2000
+        response-timeout: 10s
+      routes:
+        # Identity & Access
+        - id: identity-access
+          uri: ${medimitra.gateway.backends.identity-access}
+          predicates:
+            - Path=/api/v1/auth/**,/api/v1/users/**
+
+        # Doctor slots (Scheduling) must be matched before the general /doctors/** listing
+        # (Provider Directory) below — Spring Cloud Gateway matches routes top-to-bottom.
+        - id: scheduling-doctor-slots
+          uri: ${medimitra.gateway.backends.scheduling}
+          predicates:
+            - Path=/api/v1/doctors/*/slots
+
+        # Provider Directory: doctor/lab catalogue and search
+        - id: provider-directory
+          uri: ${medimitra.gateway.backends.provider-directory}
+          predicates:
+            - Path=/api/v1/doctors/**,/api/v1/labs/**,/api/v1/lab-tests/**
+
+        # Patient Profile
+        - id: patient-profile
+          uri: ${medimitra.gateway.backends.patient-profile}
+          predicates:
+            - Path=/api/v1/patients/**
+
+        # Consent & Access
+        - id: consent-access
+          uri: ${medimitra.gateway.backends.consent-access}
+          predicates:
+            - Path=/api/v1/consents/**,/api/v1/access/**
+
+        # Medical Records
+        - id: medical-records
+          uri: ${medimitra.gateway.backends.medical-records}
+          predicates:
+            - Path=/api/v1/records/**
+
+        # Document
+        - id: document
+          uri: ${medimitra.gateway.backends.document}
+          predicates:
+            - Path=/api/v1/documents/**
+
+        # Document Intelligence
+        - id: document-intelligence
+          uri: ${medimitra.gateway.backends.document-intelligence}
+          predicates:
+            - Path=/api/v1/extractions/**
+
+        # Scheduling: appointments
+        - id: scheduling-appointments
+          uri: ${medimitra.gateway.backends.scheduling}
+          predicates:
+            - Path=/api/v1/appointments/**
+
+        # Lab Order
+        - id: lab-order
+          uri: ${medimitra.gateway.backends.lab-order}
+          predicates:
+            - Path=/api/v1/lab-orders/**
+
+        # Payment
+        - id: payment
+          uri: ${medimitra.gateway.backends.payment}
+          predicates:
+            - Path=/api/v1/payments/**
+
+        # AI Insights
+        - id: ai-insights
+          uri: ${medimitra.gateway.backends.ai-insights}
+          predicates:
+            - Path=/api/v1/insights/**,/api/v1/reports/**
+
+        # AI Assistant (SSE streaming chat; httpclient.response-timeout above does not apply
+        # to the duration of an SSE stream itself, only to establishing the connection)
+        - id: ai-assistant
+          uri: ${medimitra.gateway.backends.ai-assistant}
+          predicates:
+            - Path=/api/v1/assistant/**
+
+        # Audit
+        - id: audit
+          uri: ${medimitra.gateway.backends.audit}
+          predicates:
+            - Path=/api/v1/audit/**
+
+        # Notification is deliberately NOT routed here: README section 6 lists it as
+        # "internal only" (Kafka consumer, no public API).
+
+medimitra:
+  gateway:
+    backends:
+      identity-access: http://localhost:8081
+      patient-profile: http://localhost:8082
+      consent-access: http://localhost:8083
+      medical-records: http://localhost:8084
+      document: http://localhost:8085
+      document-intelligence: http://localhost:8086
+      provider-directory: http://localhost:8087
+      scheduling: http://localhost:8088
+      lab-order: http://localhost:8089
+      payment: http://localhost:8090
+      ai-insights: http://localhost:8092
+      ai-assistant: http://localhost:8093
+      audit: http://localhost:8094
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
