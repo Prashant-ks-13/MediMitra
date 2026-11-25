@@ -10,11 +10,18 @@ spring:
         connect-timeout: 2000
         response-timeout: 10s
       routes:
-        # Identity & Access
-        - id: identity-access
+        # Identity & Access: login/OTP must be reachable without a token (that's how you get one);
+        # /users/** needs a valid token like every other route, so it is NOT marked public.
+        - id: identity-access-auth
           uri: ${medimitra.gateway.backends.identity-access}
           predicates:
-            - Path=/api/v1/auth/**,/api/v1/users/**
+            - Path=/api/v1/auth/**
+          metadata:
+            medimitra.public: true
+        - id: identity-access-users
+          uri: ${medimitra.gateway.backends.identity-access}
+          predicates:
+            - Path=/api/v1/users/**
 
         # Doctor slots (Scheduling) must be matched before the general /doctors/** listing
         # (Provider Directory) below — Spring Cloud Gateway matches routes top-to-bottom.
@@ -115,6 +122,16 @@ medimitra:
       ai-insights: http://localhost:8092
       ai-assistant: http://localhost:8093
       audit: http://localhost:8094
+
+  security:
+    # Placeholder cell config; each deployed cell overrides these for its own Keycloak realm.
+    # Convention: Identity & Access must include "medimitra-api-gateway" in every token's aud
+    # claim alongside the specific target service, since the gateway fronts all of them and
+    # medimitra-common-security's JwtTokenValidator checks a single expected audience value.
+    issuer: https://auth.in.medimitra.dev
+    jwks-uri: https://auth.in.medimitra.dev/.well-known/jwks.json
+    audience: medimitra-api-gateway
+    region: IN
 
 management:
   endpoints:
