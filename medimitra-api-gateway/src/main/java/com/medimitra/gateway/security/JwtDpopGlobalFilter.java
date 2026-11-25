@@ -43,6 +43,9 @@ public class JwtDpopGlobalFilter implements GlobalFilter, Ordered {
 
     public static final String PUBLIC_ROUTE_METADATA_KEY = "medimitra.public";
 
+    /** Exchange attribute the validated {@link AuthenticatedPrincipal} is stored under for later filters (e.g. rate limiting). */
+    public static final String PRINCIPAL_ATTRIBUTE = JwtDpopGlobalFilter.class.getName() + ".principal";
+
     private static final Logger log = LoggerFactory.getLogger(JwtDpopGlobalFilter.class);
 
     private final JwtTokenValidator jwtTokenValidator;
@@ -90,6 +93,7 @@ public class JwtDpopGlobalFilter implements GlobalFilter, Ordered {
                 dpopProofVerifier.verify(dpopHeader, request.getMethod().name(), requestUriWithoutQuery(request), principal.dpopKeyThumbprint());
             }
             regionGuard.verify(principal.region());
+            exchange.getAttributes().put(PRINCIPAL_ATTRIBUTE, principal);
         } catch (MediMitraException e) {
             return reject(exchange, e);
         }

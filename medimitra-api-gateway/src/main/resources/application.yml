@@ -123,6 +123,13 @@ medimitra:
       ai-assistant: http://localhost:8093
       audit: http://localhost:8094
 
+    # Fixed-window rate limit applied per caller (authenticated subject, else remote IP).
+    # Single-instance default (see InMemoryGatewayRateLimiter); a multi-instance deployment
+    # needs these counters backed by Redis instead.
+    rate-limit:
+      limit-per-window: 100
+      window-seconds: 60
+
   security:
     # Placeholder cell config; each deployed cell overrides these for its own Keycloak realm.
     # Convention: Identity & Access must include "medimitra-api-gateway" in every token's aud
