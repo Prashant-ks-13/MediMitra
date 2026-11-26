@@ -1,0 +1,16 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:patient_profile;MODE=PostgreSQL;DB_CLOSE_DELAY=-1
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: update
+    database-platform: org.hibernate.dialect.H2Dialect
+
+medimitra:
+  patient-profile:
+    topics:
+      user-registered: medimitra.test.user.registered.v1
+      user-registered-group: medimitra-patient-profile-user-registered-test
