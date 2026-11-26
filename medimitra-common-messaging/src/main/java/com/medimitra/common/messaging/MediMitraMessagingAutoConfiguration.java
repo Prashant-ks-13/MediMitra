@@ -58,6 +58,12 @@ public class MediMitraMessagingAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
+    public EventEnvelopeCodec eventEnvelopeCodec(ObjectMapper objectMapper) {
+        return new EventEnvelopeCodec(objectMapper);
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
     public OutboxRelay outboxRelay(
             OutboxEventRepository repository,
             KafkaEventPublisher kafkaEventPublisher,
