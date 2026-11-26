@@ -1,9 +1,11 @@
 package com.medimitra.identityaccess.infrastructure.client;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import com.medimitra.common.contracts.event.UserRole;
 import com.medimitra.common.core.Region;
+import com.medimitra.identityaccess.application.TokenResponse;
 import com.sun.net.httpserver.HttpServer;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -15,6 +17,21 @@ import org.junit.jupiter.api.Test;
 import org.springframework.web.client.RestClient;
 
 class RestKeycloakClientTest {
+
+    private RestKeycloakClient clientFor(int port) {
+        return new RestKeycloakClient(
+                RestClient.builder(), "http://localhost:" + port, audience -> "fake-admin-token", "medimitra-in", "realm-management",
+                "medimitra-patient-app", "changeme");
+    }
+
+    private static void sendTokenResponse(com.sun.net.httpserver.HttpExchange exchange) throws IOException {
+        byte[] body = "{\"access_token\":\"access-1\",\"refresh_token\":\"refresh-1\",\"expires_in\":300,\"token_type\":\"DPoP\"}".getBytes();
+        exchange.getResponseHeaders().add("Content-Type", "application/json");
+        exchange.sendResponseHeaders(200, body.length);
+        try (OutputStream os = exchange.getResponseBody()) {
+            os.write(body);
+        }
+    }
 
     private HttpServer server;
 
@@ -51,13 +68,57 @@ class RestKeycloakClientTest {
         });
         server.start();
 
-        RestKeycloakClient client = new RestKeycloakClient(
-                RestClient.builder(), "http://localhost:" + server.getAddress().getPort(), audience -> "fake-admin-token", "medimitra-in", "realm-management");
+        RestKeycloakClient client = clientFor(server.getAddress().getPort());
 
         UUID result = client.createUser("a@b.com", "password123", UserRole.PATIENT, Region.IN);
 
         assertNotNull(result);
-        org.junit.jupiter.api.Assertions.assertEquals(createdUserId, result);
+        assertEquals(createdUserId, result);
         org.junit.jupiter.api.Assertions.assertTrue(roleMappingBody.get().contains("PATIENT"));
+    }
+
+    @Test
+    void passwordLoginReturnsTokensAndForwardsDpopHeader() throws IOException {
+        AtomicReference<String> capturedDpopHeader = new AtomicReference<>();
+        AtomicReference<String> capturedBody = new AtomicReference<>();
+
+        server = HttpServer.create(new InetSocketAddress(0), 0);
+        server.createContext("/realms/medimitra-in/protocol/openid-connect/token", exchange -> {
+            capturedDpopHeader.set(exchange.getRequestHeaders().getFirst("DPoP"));
+            capturedBody.set(new String(exchange.getRequestBody().readAllBytes()));
+            sendTokenResponse(exchange);
+        });
+        server.start();
+
+        RestKeycloakClient client = clientFor(server.getAddress().getPort());
+
+        TokenResponse response = client.passwordLogin("a@b.com", "password123", "dpop-proof-1");
+
+        assertEquals("access-1", response.accessToken());
+        assertEquals("refresh-1", response.refreshToken());
+        assertEquals(300, response.expiresInSeconds());
+        assertEquals("dpop-proof-1", capturedDpopHeader.get());
+        org.junit.jupiter.api.Assertions.assertTrue(capturedBody.get().contains("grant_type=password"));
+    }
+
+    @Test
+    void tokenExchangeReturnsTokensForTheRequestedSubject() throws IOException {
+        UUID userId = UUID.randomUUID();
+        AtomicReference<String> capturedBody = new AtomicReference<>();
+
+        server = HttpServer.create(new InetSocketAddress(0), 0);
+        server.createContext("/realms/medimitra-in/protocol/openid-connect/token", exchange -> {
+            capturedBody.set(new String(exchange.getRequestBody().readAllBytes()));
+            sendTokenResponse(exchange);
+        });
+        server.start();
+
+        RestKeycloakClient client = clientFor(server.getAddress().getPort());
+
+        TokenResponse response = client.tokenExchangeFor(userId, null);
+
+        assertEquals("access-1", response.accessToken());
+        org.junit.jupiter.api.Assertions.assertTrue(capturedBody.get().contains("requested_subject=" + userId));
+        org.junit.jupiter.api.Assertions.assertTrue(capturedBody.get().contains("token-exchange"));
     }
 }

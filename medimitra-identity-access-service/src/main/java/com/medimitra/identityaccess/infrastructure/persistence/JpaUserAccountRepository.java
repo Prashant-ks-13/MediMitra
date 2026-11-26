@@ -4,6 +4,8 @@ import com.medimitra.common.contracts.event.UserRole;
 import com.medimitra.common.core.Region;
 import com.medimitra.identityaccess.application.UserAccountRepository;
 import com.medimitra.identityaccess.domain.UserAccount;
+import java.util.Optional;
+import java.util.UUID;
 
 /** Adapter: translates between the domain's {@link UserAccount} and the JPA entity. */
 public class JpaUserAccountRepository implements UserAccountRepository {
@@ -17,6 +19,11 @@ public class JpaUserAccountRepository implements UserAccountRepository {
     @Override
     public boolean existsByEmail(String email) {
         return jpaRepository.existsByEmail(email);
+    }
+
+    @Override
+    public Optional<UUID> findIdByEmail(String email) {
+        return jpaRepository.findByEmail(email).map(UserAccountJpaEntity::getId);
     }
 
     @Override
