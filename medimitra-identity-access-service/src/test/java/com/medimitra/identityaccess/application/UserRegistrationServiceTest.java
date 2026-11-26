@@ -16,6 +16,8 @@ import com.medimitra.common.core.SystemClockProvider;
 import com.medimitra.common.core.exception.DuplicateRequestException;
 import com.medimitra.common.messaging.EventEnvelope;
 import com.medimitra.common.messaging.EventPublisher;
+import com.medimitra.identityaccess.application.port.KeycloakClient;
+import com.medimitra.identityaccess.application.port.UserAccountRepository;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;

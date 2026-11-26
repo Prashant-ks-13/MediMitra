@@ -1,7 +1,7 @@
 package com.medimitra.identityaccess.infrastructure.otp;
 
-import com.medimitra.identityaccess.application.OtpRecord;
-import com.medimitra.identityaccess.application.OtpStore;
+import com.medimitra.identityaccess.application.port.OtpRecord;
+import com.medimitra.identityaccess.application.port.OtpStore;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;

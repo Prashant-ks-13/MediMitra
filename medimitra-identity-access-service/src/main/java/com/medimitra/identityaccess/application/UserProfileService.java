@@ -2,6 +2,7 @@ package com.medimitra.identityaccess.application;
 
 import com.medimitra.common.core.exception.ResourceNotFoundException;
 import com.medimitra.identityaccess.IdentityErrorCodes;
+import com.medimitra.identityaccess.application.port.UserAccountRepository;
 import com.medimitra.identityaccess.domain.UserAccount;
 import java.util.UUID;
 

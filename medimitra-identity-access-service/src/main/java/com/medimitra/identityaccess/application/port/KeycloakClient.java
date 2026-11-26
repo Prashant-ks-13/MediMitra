@@ -1,4 +1,4 @@
-package com.medimitra.identityaccess.application;
+package com.medimitra.identityaccess.application.port;
 
 import com.medimitra.common.contracts.event.UserRole;
 import com.medimitra.common.core.Region;

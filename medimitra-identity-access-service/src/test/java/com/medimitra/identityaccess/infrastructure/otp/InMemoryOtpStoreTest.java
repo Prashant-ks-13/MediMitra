@@ -3,7 +3,7 @@ package com.medimitra.identityaccess.infrastructure.otp;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.medimitra.identityaccess.application.OtpRecord;
+import com.medimitra.identityaccess.application.port.OtpRecord;
 import java.time.Instant;
 import org.junit.jupiter.api.Test;
 

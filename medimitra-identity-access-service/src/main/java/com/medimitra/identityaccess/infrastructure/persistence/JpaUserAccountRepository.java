@@ -2,12 +2,20 @@ package com.medimitra.identityaccess.infrastructure.persistence;
 
 import com.medimitra.common.contracts.event.UserRole;
 import com.medimitra.common.core.Region;
-import com.medimitra.identityaccess.application.UserAccountRepository;
+import com.medimitra.identityaccess.application.port.UserAccountRepository;
 import com.medimitra.identityaccess.domain.UserAccount;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.stereotype.Repository;
 
-/** Adapter: translates between the domain's {@link UserAccount} and the JPA entity. */
+/**
+ * Adapter: translates between the domain's {@link UserAccount} and the JPA entity.
+ *
+ * <p>Self-registering via {@code @Repository} rather than an explicit {@code @Bean} in
+ * {@code config} — a factory method in a different package couldn't reference the
+ * package-private {@link UserAccountJpaRepository} constructor parameter type at all.
+ */
+@Repository
 public class JpaUserAccountRepository implements UserAccountRepository {
 
     private final UserAccountJpaRepository jpaRepository;

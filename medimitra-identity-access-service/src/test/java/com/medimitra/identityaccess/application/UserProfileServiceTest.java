@@ -8,6 +8,7 @@ import static org.mockito.Mockito.when;
 import com.medimitra.common.contracts.event.UserRole;
 import com.medimitra.common.core.Region;
 import com.medimitra.common.core.exception.ResourceNotFoundException;
+import com.medimitra.identityaccess.application.port.UserAccountRepository;
 import com.medimitra.identityaccess.domain.UserAccount;
 import java.time.Instant;
 import java.util.Optional;

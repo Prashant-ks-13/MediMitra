@@ -1,6 +1,6 @@
 package com.medimitra.identityaccess.api;
 
-import com.medimitra.identityaccess.application.TokenResponse;
+import com.medimitra.identityaccess.application.port.TokenResponse;
 
 public record TokenResponseDto(String accessToken, String refreshToken, long expiresInSeconds, String tokenType) {
 
