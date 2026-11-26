@@ -1,5 +1,6 @@
 package com.medimitra.identityaccess.infrastructure.persistence;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -40,5 +41,21 @@ class JpaUserAccountRepositoryTest {
         repository.save(new UserAccount(UUID.randomUUID(), "a@b.com", UserRole.PATIENT, Region.IN, Instant.now()));
 
         assertTrue(repository.existsByEmail("a@b.com"));
+    }
+
+    @Test
+    void findByIdRoundTripsTheDomainRecord() {
+        JpaUserAccountRepository repository = new JpaUserAccountRepository(jpaRepository);
+        UUID id = UUID.randomUUID();
+        Instant createdAt = Instant.now();
+        UserAccount account = new UserAccount(id, "c@d.com", UserRole.DOCTOR, Region.EU, createdAt);
+        repository.save(account);
+
+        UserAccount found = repository.findById(id).orElseThrow();
+
+        assertEquals(account.id(), found.id());
+        assertEquals(account.email(), found.email());
+        assertEquals(account.role(), found.role());
+        assertEquals(account.region(), found.region());
     }
 }

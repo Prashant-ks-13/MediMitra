@@ -10,6 +10,7 @@ import com.medimitra.identityaccess.application.KeycloakClient;
 import com.medimitra.identityaccess.application.OtpSender;
 import com.medimitra.identityaccess.application.OtpStore;
 import com.medimitra.identityaccess.application.UserAccountRepository;
+import com.medimitra.identityaccess.application.UserProfileService;
 import com.medimitra.identityaccess.application.UserRegistrationService;
 import com.medimitra.identityaccess.infrastructure.client.RestKeycloakClient;
 import com.medimitra.identityaccess.infrastructure.otp.InMemoryOtpStore;
@@ -73,5 +74,10 @@ public class IdentityAccessConfiguration {
                 keycloakClient, userAccountRepository, otpStore, otpSender, tokenDenylist, clockProvider,
                 Duration.ofSeconds(otpProperties.getTtlSeconds()), otpProperties.getCodeLength(),
                 Duration.ofSeconds(keycloakProperties.getAccessTokenLifetimeSeconds()));
+    }
+
+    @Bean
+    public UserProfileService userProfileService(UserAccountRepository repository) {
+        return new UserProfileService(repository);
     }
 }
