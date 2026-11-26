@@ -11,6 +11,7 @@ import static org.mockito.Mockito.when;
 import com.medimitra.common.core.ClockProvider;
 import com.medimitra.common.core.SystemClockProvider;
 import com.medimitra.common.core.exception.AuthenticationFailedException;
+import com.medimitra.common.security.TokenDenylist;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
@@ -23,14 +24,20 @@ class AuthenticationServiceTest {
 
     private final ClockProvider clockProvider = new SystemClockProvider(Clock.fixed(Instant.parse("2026-01-01T00:00:00Z"), ZoneOffset.UTC));
 
+    private AuthenticationService service(
+            KeycloakClient keycloakClient, UserAccountRepository repository, OtpStore otpStore, OtpSender otpSender, TokenDenylist tokenDenylist) {
+        return new AuthenticationService(
+                keycloakClient, repository, otpStore, otpSender, tokenDenylist, clockProvider, Duration.ofMinutes(5), 6,
+                Duration.ofMinutes(5));
+    }
+
     @Test
     void loginDelegatesDirectlyToKeycloak() {
         KeycloakClient keycloakClient = mock(KeycloakClient.class);
         TokenResponse expected = new TokenResponse("a", "b", 300, "DPoP");
         when(keycloakClient.passwordLogin("a@b.com", "pw", "proof")).thenReturn(expected);
-        AuthenticationService service = new AuthenticationService(
-                keycloakClient, mock(UserAccountRepository.class), mock(OtpStore.class), mock(OtpSender.class), clockProvider,
-                Duration.ofMinutes(5), 6);
+        AuthenticationService service = service(
+                keycloakClient, mock(UserAccountRepository.class), mock(OtpStore.class), mock(OtpSender.class), mock(TokenDenylist.class));
 
         assertEquals(expected, service.login("a@b.com", "pw", "proof"));
     }
@@ -40,8 +47,8 @@ class AuthenticationServiceTest {
         UserAccountRepository repository = mock(UserAccountRepository.class);
         OtpSender otpSender = mock(OtpSender.class);
         when(repository.existsByEmail("unknown@b.com")).thenReturn(false);
-        AuthenticationService service = new AuthenticationService(
-                mock(KeycloakClient.class), repository, mock(OtpStore.class), otpSender, clockProvider, Duration.ofMinutes(5), 6);
+        AuthenticationService service =
+                service(mock(KeycloakClient.class), repository, mock(OtpStore.class), otpSender, mock(TokenDenylist.class));
 
         service.requestOtp("unknown@b.com");
 
@@ -54,8 +61,7 @@ class AuthenticationServiceTest {
         OtpStore otpStore = mock(OtpStore.class);
         OtpSender otpSender = mock(OtpSender.class);
         when(repository.existsByEmail("a@b.com")).thenReturn(true);
-        AuthenticationService service = new AuthenticationService(
-                mock(KeycloakClient.class), repository, otpStore, otpSender, clockProvider, Duration.ofMinutes(5), 6);
+        AuthenticationService service = service(mock(KeycloakClient.class), repository, otpStore, otpSender, mock(TokenDenylist.class));
 
         service.requestOtp("a@b.com");
 
@@ -70,8 +76,7 @@ class AuthenticationServiceTest {
         KeycloakClient keycloakClient = mock(KeycloakClient.class);
         UUID userId = UUID.randomUUID();
         OtpSender otpSender = mock(OtpSender.class);
-        AuthenticationService service = new AuthenticationService(
-                keycloakClient, repository, otpStore, otpSender, clockProvider, Duration.ofMinutes(5), 6);
+        AuthenticationService service = service(keycloakClient, repository, otpStore, otpSender, mock(TokenDenylist.class));
 
         // capture the real generated code by stubbing send(), then verify with that exact code
         org.mockito.ArgumentCaptor<String> codeCaptor = org.mockito.ArgumentCaptor.forClass(String.class);
@@ -97,9 +102,8 @@ class AuthenticationServiceTest {
     void verifyOtpRejectsAWrongCode() {
         OtpStore otpStore = mock(OtpStore.class);
         when(otpStore.find("a@b.com")).thenReturn(Optional.of(new OtpRecord("some-other-hash", clockProvider.now().plusSeconds(60))));
-        AuthenticationService service = new AuthenticationService(
-                mock(KeycloakClient.class), mock(UserAccountRepository.class), otpStore, mock(OtpSender.class), clockProvider,
-                Duration.ofMinutes(5), 6);
+        AuthenticationService service =
+                service(mock(KeycloakClient.class), mock(UserAccountRepository.class), otpStore, mock(OtpSender.class), mock(TokenDenylist.class));
 
         assertThrows(AuthenticationFailedException.class, () -> service.verifyOtp("a@b.com", "000000", null));
     }
@@ -107,13 +111,50 @@ class AuthenticationServiceTest {
     @Test
     void verifyOtpRejectsAnExpiredCode() {
         OtpStore otpStore = mock(OtpStore.class);
-        when(otpStore.find("a@b.com"))
-                .thenReturn(Optional.of(new OtpRecord(sha256("000000"), clockProvider.now().minusSeconds(1))));
-        AuthenticationService service = new AuthenticationService(
-                mock(KeycloakClient.class), mock(UserAccountRepository.class), otpStore, mock(OtpSender.class), clockProvider,
-                Duration.ofMinutes(5), 6);
+        when(otpStore.find("a@b.com")).thenReturn(Optional.of(new OtpRecord(sha256("000000"), clockProvider.now().minusSeconds(1))));
+        AuthenticationService service =
+                service(mock(KeycloakClient.class), mock(UserAccountRepository.class), otpStore, mock(OtpSender.class), mock(TokenDenylist.class));
 
         assertThrows(AuthenticationFailedException.class, () -> service.verifyOtp("a@b.com", "000000", null));
+    }
+
+    @Test
+    void refreshDelegatesDirectlyToKeycloak() {
+        KeycloakClient keycloakClient = mock(KeycloakClient.class);
+        TokenResponse expected = new TokenResponse("a", "b", 300, "DPoP");
+        when(keycloakClient.refreshToken("old-refresh", "proof")).thenReturn(expected);
+        AuthenticationService service = service(
+                keycloakClient, mock(UserAccountRepository.class), mock(OtpStore.class), mock(OtpSender.class), mock(TokenDenylist.class));
+
+        assertEquals(expected, service.refresh("old-refresh", "proof"));
+    }
+
+    @Test
+    void logoutEndsTheKeycloakSessionAndDeniesTheCurrentToken() {
+        KeycloakClient keycloakClient = mock(KeycloakClient.class);
+        TokenDenylist tokenDenylist = mock(TokenDenylist.class);
+        AuthenticationService service = service(
+                keycloakClient, mock(UserAccountRepository.class), mock(OtpStore.class), mock(OtpSender.class), tokenDenylist);
+
+        service.logout("refresh-1", "jti-1", "sid-1");
+
+        verify(keycloakClient).logout("refresh-1");
+        verify(tokenDenylist).deny("jti-1", "sid-1", clockProvider.now().plus(Duration.ofMinutes(5)));
+    }
+
+    @Test
+    void stepUpReusesTheOtpVerificationMechanism() {
+        UserAccountRepository repository = mock(UserAccountRepository.class);
+        OtpStore otpStore = mock(OtpStore.class);
+        KeycloakClient keycloakClient = mock(KeycloakClient.class);
+        UUID userId = UUID.randomUUID();
+        when(otpStore.find("a@b.com")).thenReturn(Optional.of(new OtpRecord(sha256("123456"), clockProvider.now().plusSeconds(60))));
+        when(repository.findIdByEmail("a@b.com")).thenReturn(Optional.of(userId));
+        TokenResponse expected = new TokenResponse("stepped-up", "refresh", 300, "DPoP");
+        when(keycloakClient.tokenExchangeFor(userId, null)).thenReturn(expected);
+        AuthenticationService service = service(keycloakClient, repository, otpStore, mock(OtpSender.class), mock(TokenDenylist.class));
+
+        assertEquals(expected, service.stepUp("a@b.com", "123456", null));
     }
 
     private static String sha256(String value) {

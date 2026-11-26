@@ -4,6 +4,7 @@ import com.medimitra.common.contracts.event.UserRole;
 import com.medimitra.common.core.Region;
 import com.medimitra.common.core.error.ErrorCode;
 import com.medimitra.common.core.exception.AuthenticationFailedException;
+import com.medimitra.common.core.exception.ExternalServiceUnavailableException;
 import com.medimitra.common.security.ServiceTokenProvider;
 import com.medimitra.identityaccess.IdentityErrorCodes;
 import com.medimitra.identityaccess.application.KeycloakClient;
@@ -117,6 +118,32 @@ public class RestKeycloakClient implements KeycloakClient {
                 + "&subject_token_type=" + encode("urn:ietf:params:oauth:token-type:access_token")
                 + "&requested_subject=" + encode(userId.toString());
         return requestToken(body, dpopProof, IdentityErrorCodes.OTP_INVALID_OR_EXPIRED, "token exchange failed for " + userId);
+    }
+
+    @Override
+    public TokenResponse refreshToken(String refreshToken, String dpopProof) {
+        String body = "grant_type=refresh_token"
+                + "&client_id=" + encode(publicClientId)
+                + "&client_secret=" + encode(publicClientSecret)
+                + "&refresh_token=" + encode(refreshToken);
+        return requestToken(body, dpopProof, IdentityErrorCodes.REFRESH_FAILED, "refresh failed");
+    }
+
+    @Override
+    public void logout(String refreshToken) {
+        String body = "client_id=" + encode(publicClientId) + "&client_secret=" + encode(publicClientSecret) + "&refresh_token="
+                + encode(refreshToken);
+        try {
+            restClient
+                    .post()
+                    .uri("/realms/{realm}/protocol/openid-connect/logout", realm)
+                    .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                    .body(body)
+                    .retrieve()
+                    .toBodilessEntity();
+        } catch (RestClientResponseException e) {
+            throw new ExternalServiceUnavailableException(IdentityErrorCodes.LOGOUT_FAILED, "logout failed at Keycloak", e);
+        }
     }
 
     private TokenResponse requestToken(String formBody, String dpopProof, ErrorCode failureCode, String failureMessage) {
