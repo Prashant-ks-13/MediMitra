@@ -1,0 +1,44 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: medimitra-identity-access-service
+  datasource:
+    url: jdbc:postgresql://localhost:5432/medimitra_identity_access
+    username: medimitra
+    password: medimitra
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+
+medimitra:
+  # Placeholder cell config; each deployed cell overrides these for its own Keycloak realm.
+  security:
+    issuer: https://auth.in.medimitra.dev
+    jwks-uri: https://auth.in.medimitra.dev/.well-known/jwks.json
+    audience: medimitra-identity-access
+    region: IN
+    service-token:
+      token-uri: https://auth.in.medimitra.dev/realms/medimitra-in/protocol/openid-connect/token
+      client-id: identity-access-admin
+      client-secret: changeme
+    consent:
+      base-url: http://localhost:8083
+
+  identity:
+    keycloak:
+      base-url: https://auth.in.medimitra.dev
+      realm: medimitra-in
+      admin-audience: realm-management
+
+  messaging:
+    relay:
+      fixed-delay-ms: 2000
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health

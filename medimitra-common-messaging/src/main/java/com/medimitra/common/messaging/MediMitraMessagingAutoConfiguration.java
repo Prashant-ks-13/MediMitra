@@ -72,12 +72,19 @@ public class MediMitraMessagingAutoConfiguration {
      * Applied automatically by Spring Boot's own listener-container-factory auto-configuration once
      * present as a bean: retries each failed delivery with backoff, then routes it to {@code <topic>.dlt}
      * for alerting, per the retry/dead-letter rule in the Kafka topics table.
+     *
+     * <p>Reuses {@code outboxKafkaTemplate} (rather than depending on Boot's own default
+     * {@code KafkaTemplate<Object, Object>} bean) because {@code @ConditionalOnMissingBean(KafkaTemplate.class)}
+     * matches by raw type regardless of generics — {@code outboxKafkaTemplate}'s mere presence already
+     * suppresses that default bean, so a parameter typed {@code KafkaTemplate<Object, Object>} here would
+     * never resolve. {@code DeadLetterPublishingRecoverer} accepts {@code KafkaOperations<?, ?>}, so the
+     * narrower {@code <String, String>} template works fine.
      */
     @Bean
     @ConditionalOnMissingBean(CommonErrorHandler.class)
-    public CommonErrorHandler commonErrorHandler(KafkaTemplate<Object, Object> kafkaTemplate, MediMitraMessagingProperties properties) {
+    public CommonErrorHandler commonErrorHandler(KafkaTemplate<String, String> outboxKafkaTemplate, MediMitraMessagingProperties properties) {
         DeadLetterPublishingRecoverer recoverer = new DeadLetterPublishingRecoverer(
-                kafkaTemplate,
+                outboxKafkaTemplate,
                 (record, ex) -> new TopicPartition(TopicNaming.deadLetter(record.topic()), record.partition()));
         ExponentialBackOff backOff =
                 new ExponentialBackOff(properties.getRetry().getInitialIntervalMs(), properties.getRetry().getMultiplier());
