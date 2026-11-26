@@ -1,6 +1,6 @@
 package com.medimitra.identityaccess.infrastructure.otp;
 
-import com.medimitra.identityaccess.application.OtpSender;
+import com.medimitra.identityaccess.application.port.OtpSender;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

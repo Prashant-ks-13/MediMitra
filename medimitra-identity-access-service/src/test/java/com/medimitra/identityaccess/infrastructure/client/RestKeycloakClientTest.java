@@ -5,7 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import com.medimitra.common.contracts.event.UserRole;
 import com.medimitra.common.core.Region;
-import com.medimitra.identityaccess.application.TokenResponse;
+import com.medimitra.identityaccess.application.port.TokenResponse;
 import com.sun.net.httpserver.HttpServer;
 import java.io.IOException;
 import java.io.OutputStream;

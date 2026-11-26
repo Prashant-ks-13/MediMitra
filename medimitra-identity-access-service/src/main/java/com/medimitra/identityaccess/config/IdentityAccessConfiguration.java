@@ -6,17 +6,15 @@ import com.medimitra.common.messaging.EventPublisher;
 import com.medimitra.common.security.ServiceTokenProvider;
 import com.medimitra.common.security.TokenDenylist;
 import com.medimitra.identityaccess.application.AuthenticationService;
-import com.medimitra.identityaccess.application.KeycloakClient;
-import com.medimitra.identityaccess.application.OtpSender;
-import com.medimitra.identityaccess.application.OtpStore;
-import com.medimitra.identityaccess.application.UserAccountRepository;
 import com.medimitra.identityaccess.application.UserProfileService;
 import com.medimitra.identityaccess.application.UserRegistrationService;
+import com.medimitra.identityaccess.application.port.KeycloakClient;
+import com.medimitra.identityaccess.application.port.OtpSender;
+import com.medimitra.identityaccess.application.port.OtpStore;
+import com.medimitra.identityaccess.application.port.UserAccountRepository;
 import com.medimitra.identityaccess.infrastructure.client.RestKeycloakClient;
 import com.medimitra.identityaccess.infrastructure.otp.InMemoryOtpStore;
 import com.medimitra.identityaccess.infrastructure.otp.LoggingOtpSender;
-import com.medimitra.identityaccess.infrastructure.persistence.JpaUserAccountRepository;
-import com.medimitra.identityaccess.infrastructure.persistence.UserAccountJpaRepository;
 import java.time.Duration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -36,10 +34,8 @@ public class IdentityAccessConfiguration {
                 properties.getPublicClientId(), properties.getPublicClientSecret());
     }
 
-    @Bean
-    public UserAccountRepository userAccountRepository(UserAccountJpaRepository jpaRepository) {
-        return new JpaUserAccountRepository(jpaRepository);
-    }
+    // UserAccountRepository itself is not wired here — its JPA adapter is @Repository-annotated
+    // and self-registering.
 
     @Bean
     public UserRegistrationService userRegistrationService(

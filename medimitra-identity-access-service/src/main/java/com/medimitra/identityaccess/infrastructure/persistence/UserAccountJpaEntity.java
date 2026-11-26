@@ -7,9 +7,13 @@ import jakarta.persistence.Table;
 import java.time.Instant;
 import java.util.UUID;
 
+/**
+ * Package-private: nothing outside this package should ever touch a JPA entity directly —
+ * {@link JpaUserAccountRepository} is the one adapter that maps to/from the domain.
+ */
 @Entity
 @Table(name = "user_account")
-public class UserAccountJpaEntity {
+class UserAccountJpaEntity {
 
     @Id
     private UUID id;
@@ -30,7 +34,7 @@ public class UserAccountJpaEntity {
         // JPA
     }
 
-    public UserAccountJpaEntity(UUID id, String email, String role, String region, Instant createdAt) {
+    UserAccountJpaEntity(UUID id, String email, String role, String region, Instant createdAt) {
         this.id = id;
         this.email = email;
         this.role = role;
@@ -38,23 +42,23 @@ public class UserAccountJpaEntity {
         this.createdAt = createdAt;
     }
 
-    public UUID getId() {
+    UUID getId() {
         return id;
     }
 
-    public String getEmail() {
+    String getEmail() {
         return email;
     }
 
-    public String getRole() {
+    String getRole() {
         return role;
     }
 
-    public String getRegion() {
+    String getRegion() {
         return region;
     }
 
-    public Instant getCreatedAt() {
+    Instant getCreatedAt() {
         return createdAt;
     }
 }

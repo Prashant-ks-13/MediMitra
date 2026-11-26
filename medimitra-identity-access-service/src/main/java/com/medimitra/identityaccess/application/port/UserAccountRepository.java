@@ -1,4 +1,4 @@
-package com.medimitra.identityaccess.application;
+package com.medimitra.identityaccess.application.port;
 
 import com.medimitra.identityaccess.domain.UserAccount;
 import java.util.Optional;

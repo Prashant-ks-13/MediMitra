@@ -1,5 +1,6 @@
 package com.medimitra.identityaccess;
 
+import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 
 import com.tngtech.archunit.core.domain.JavaClasses;
@@ -56,6 +57,19 @@ class LayeredArchitectureTest {
                 .should()
                 .dependOnClassesThat()
                 .resideInAPackage("jakarta.persistence..");
+        rule.check(CLASSES);
+    }
+
+    @Test
+    void onlyInfrastructureImplementsApplicationPorts() {
+        ArchRule rule = classes()
+                .that()
+                .resideInAPackage("..application.port..")
+                .and()
+                .areInterfaces()
+                .should()
+                .onlyHaveDependentClassesThat()
+                .resideInAnyPackage("..application..", "..infrastructure..", "..config..");
         rule.check(CLASSES);
     }
 }
