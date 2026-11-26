@@ -34,6 +34,7 @@ medimitra:
       admin-audience: realm-management
       public-client-id: medimitra-patient-app
       public-client-secret: changeme
+      access-token-lifetime-seconds: 300
     otp:
       ttl-seconds: 300
       code-length: 6

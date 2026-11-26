@@ -121,4 +121,43 @@ class RestKeycloakClientTest {
         org.junit.jupiter.api.Assertions.assertTrue(capturedBody.get().contains("requested_subject=" + userId));
         org.junit.jupiter.api.Assertions.assertTrue(capturedBody.get().contains("token-exchange"));
     }
+
+    @Test
+    void refreshTokenReturnsNewTokens() throws IOException {
+        AtomicReference<String> capturedBody = new AtomicReference<>();
+
+        server = HttpServer.create(new InetSocketAddress(0), 0);
+        server.createContext("/realms/medimitra-in/protocol/openid-connect/token", exchange -> {
+            capturedBody.set(new String(exchange.getRequestBody().readAllBytes()));
+            sendTokenResponse(exchange);
+        });
+        server.start();
+
+        RestKeycloakClient client = clientFor(server.getAddress().getPort());
+
+        TokenResponse response = client.refreshToken("old-refresh-token", null);
+
+        assertEquals("access-1", response.accessToken());
+        org.junit.jupiter.api.Assertions.assertTrue(capturedBody.get().contains("grant_type=refresh_token"));
+        org.junit.jupiter.api.Assertions.assertTrue(capturedBody.get().contains("refresh_token=old-refresh-token"));
+    }
+
+    @Test
+    void logoutCallsTheEndSessionEndpoint() throws IOException {
+        AtomicReference<String> capturedBody = new AtomicReference<>();
+
+        server = HttpServer.create(new InetSocketAddress(0), 0);
+        server.createContext("/realms/medimitra-in/protocol/openid-connect/logout", exchange -> {
+            capturedBody.set(new String(exchange.getRequestBody().readAllBytes()));
+            exchange.sendResponseHeaders(204, -1);
+            exchange.close();
+        });
+        server.start();
+
+        RestKeycloakClient client = clientFor(server.getAddress().getPort());
+
+        client.logout("refresh-1");
+
+        org.junit.jupiter.api.Assertions.assertTrue(capturedBody.get().contains("refresh_token=refresh-1"));
+    }
 }

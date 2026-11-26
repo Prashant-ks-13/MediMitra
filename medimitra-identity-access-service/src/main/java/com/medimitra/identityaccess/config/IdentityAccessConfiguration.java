@@ -4,6 +4,7 @@ import com.medimitra.common.core.ClockProvider;
 import com.medimitra.common.core.IdGenerator;
 import com.medimitra.common.messaging.EventPublisher;
 import com.medimitra.common.security.ServiceTokenProvider;
+import com.medimitra.common.security.TokenDenylist;
 import com.medimitra.identityaccess.application.AuthenticationService;
 import com.medimitra.identityaccess.application.KeycloakClient;
 import com.medimitra.identityaccess.application.OtpSender;
@@ -64,10 +65,13 @@ public class IdentityAccessConfiguration {
             UserAccountRepository userAccountRepository,
             OtpStore otpStore,
             OtpSender otpSender,
+            TokenDenylist tokenDenylist,
             ClockProvider clockProvider,
-            IdentityAccessOtpProperties otpProperties) {
+            IdentityAccessOtpProperties otpProperties,
+            IdentityAccessKeycloakProperties keycloakProperties) {
         return new AuthenticationService(
-                keycloakClient, userAccountRepository, otpStore, otpSender, clockProvider,
-                Duration.ofSeconds(otpProperties.getTtlSeconds()), otpProperties.getCodeLength());
+                keycloakClient, userAccountRepository, otpStore, otpSender, tokenDenylist, clockProvider,
+                Duration.ofSeconds(otpProperties.getTtlSeconds()), otpProperties.getCodeLength(),
+                Duration.ofSeconds(keycloakProperties.getAccessTokenLifetimeSeconds()));
     }
 }

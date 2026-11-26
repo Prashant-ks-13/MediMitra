@@ -23,10 +23,15 @@ public class MediMitraSecurityAutoConfiguration {
         return new SystemClockProvider();
     }
 
+    /**
+     * Single-instance-correct by default: a service that calls {@code deny()} (e.g. on logout)
+     * without overriding this bean must still see that denial take effect, so the default here is
+     * a real in-memory implementation, not the always-permissive {@link NoOpTokenDenylist}.
+     */
     @Bean
     @ConditionalOnMissingBean
-    public TokenDenylist tokenDenylist() {
-        return new NoOpTokenDenylist();
+    public TokenDenylist tokenDenylist(ClockProvider clockProvider) {
+        return new InMemoryTokenDenylist(clockProvider);
     }
 
     @Bean

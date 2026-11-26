@@ -11,6 +11,8 @@ public class IdentityAccessKeycloakProperties {
     private String adminAudience;
     private String publicClientId;
     private String publicClientSecret;
+    /** The realm's fixed access-token lifetime (README section 8.1: 5 minutes for all users). */
+    private long accessTokenLifetimeSeconds = 300;
 
     public String getBaseUrl() {
         return baseUrl;
@@ -50,5 +52,13 @@ public class IdentityAccessKeycloakProperties {
 
     public void setPublicClientSecret(String publicClientSecret) {
         this.publicClientSecret = publicClientSecret;
+    }
+
+    public long getAccessTokenLifetimeSeconds() {
+        return accessTokenLifetimeSeconds;
+    }
+
+    public void setAccessTokenLifetimeSeconds(long accessTokenLifetimeSeconds) {
+        this.accessTokenLifetimeSeconds = accessTokenLifetimeSeconds;
     }
 }

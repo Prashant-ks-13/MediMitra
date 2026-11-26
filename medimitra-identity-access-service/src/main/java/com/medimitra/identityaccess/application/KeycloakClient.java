@@ -24,4 +24,14 @@ public interface KeycloakClient {
      * Keycloak) has already confirmed the caller's identity.
      */
     TokenResponse tokenExchangeFor(UUID userId, String dpopProof);
+
+    /**
+     * Refresh-token grant. Rotation and reuse detection (section 8.4: "presenting an old one
+     * revokes the whole token family") are Keycloak realm settings (Revoke Refresh Token enabled),
+     * not application logic — this call simply proxies whatever Keycloak decides.
+     */
+    TokenResponse refreshToken(String refreshToken, String dpopProof);
+
+    /** Ends the session in Keycloak for {@code refreshToken} (RP-initiated logout). */
+    void logout(String refreshToken);
 }
