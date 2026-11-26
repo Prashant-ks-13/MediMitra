@@ -9,6 +9,8 @@ public class IdentityAccessKeycloakProperties {
     private String baseUrl;
     private String realm;
     private String adminAudience;
+    private String publicClientId;
+    private String publicClientSecret;
 
     public String getBaseUrl() {
         return baseUrl;
@@ -32,5 +34,21 @@ public class IdentityAccessKeycloakProperties {
 
     public void setAdminAudience(String adminAudience) {
         this.adminAudience = adminAudience;
+    }
+
+    public String getPublicClientId() {
+        return publicClientId;
+    }
+
+    public void setPublicClientId(String publicClientId) {
+        this.publicClientId = publicClientId;
+    }
+
+    public String getPublicClientSecret() {
+        return publicClientSecret;
+    }
+
+    public void setPublicClientSecret(String publicClientSecret) {
+        this.publicClientSecret = publicClientSecret;
     }
 }

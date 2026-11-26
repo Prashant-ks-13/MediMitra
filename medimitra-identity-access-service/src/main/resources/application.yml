@@ -32,6 +32,11 @@ medimitra:
       base-url: https://auth.in.medimitra.dev
       realm: medimitra-in
       admin-audience: realm-management
+      public-client-id: medimitra-patient-app
+      public-client-secret: changeme
+    otp:
+      ttl-seconds: 300
+      code-length: 6
 
   messaging:
     relay:
