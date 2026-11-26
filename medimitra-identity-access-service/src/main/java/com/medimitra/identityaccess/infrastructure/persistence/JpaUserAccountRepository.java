@@ -27,8 +27,19 @@ public class JpaUserAccountRepository implements UserAccountRepository {
     }
 
     @Override
+    public Optional<UserAccount> findById(UUID id) {
+        return jpaRepository.findById(id).map(JpaUserAccountRepository::toDomain);
+    }
+
+    @Override
     public void save(UserAccount account) {
         jpaRepository.save(new UserAccountJpaEntity(
                 account.id(), account.email(), account.role().name(), account.region().name(), account.createdAt()));
+    }
+
+    private static UserAccount toDomain(UserAccountJpaEntity entity) {
+        return new UserAccount(
+                entity.getId(), entity.getEmail(), UserRole.valueOf(entity.getRole()), Region.valueOf(entity.getRegion()),
+                entity.getCreatedAt());
     }
 }

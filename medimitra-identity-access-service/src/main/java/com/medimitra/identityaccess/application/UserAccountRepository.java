@@ -10,5 +10,7 @@ public interface UserAccountRepository {
 
     Optional<UUID> findIdByEmail(String email);
 
+    Optional<UserAccount> findById(UUID id);
+
     void save(UserAccount account);
 }

@@ -13,4 +13,5 @@ public final class IdentityErrorCodes {
     public static final ErrorCode OTP_INVALID_OR_EXPIRED = new ErrorCode("MM-IAM-401-OTP_INVALID_OR_EXPIRED");
     public static final ErrorCode REFRESH_FAILED = new ErrorCode("MM-IAM-401-REFRESH_FAILED");
     public static final ErrorCode LOGOUT_FAILED = new ErrorCode("MM-IAM-503-LOGOUT_FAILED");
+    public static final ErrorCode ACCOUNT_NOT_FOUND = new ErrorCode("MM-IAM-404-ACCOUNT_NOT_FOUND");
 }
